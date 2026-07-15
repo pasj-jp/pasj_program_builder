@@ -284,7 +284,7 @@ def block_title(block: ProgramBlock) -> str:
 def render_presentation(pres: Presentation) -> str:
     title_en = ""
     if pres.title_en and pres.title_en.strip() != pres.title_ja.strip():
-        title_en = f'<div class="title-en">{html.escape(pres.title_en)}</div>'
+        title_en = f'<div class="title-en">{safe_inline_html(pres.title_en)}</div>'
 
     affiliation = html.escape(pres.presenter_affiliation_en)
     presenter_ja = html.escape(pres.presenter_ja)
@@ -294,7 +294,7 @@ def render_presentation(pres: Presentation) -> str:
         <tr class="paper-title-row">
           <td class="paper-code" rowspan="2">{html.escape(pres.code)}</td>
           <td class="paper-title">
-            <div class="title-ja">{html.escape(pres.title_ja)}</div>
+            <div class="title-ja">{safe_inline_html(pres.title_ja)}</div>
             {title_en}
           </td>
         </tr>
@@ -396,7 +396,7 @@ body {
 }
 
 .paper-code {
-  width: 20mm;
+  width: 30mm;
   vertical-align: top;
   text-align: left;
   font-weight: 700;
