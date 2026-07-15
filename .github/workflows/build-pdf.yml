@@ -8,6 +8,7 @@ on:
       - abstract.json
       - program_overrides.json
       - build_program.py
+      - build_author_index.py
       - vivliostyle.config.js
       - .github/workflows/build-pdf.yml
   workflow_dispatch:
@@ -44,7 +45,9 @@ jobs:
           fc-match "Nimbus Roman"
 
       - name: Generate HTML and CSS
-        run: python3 build_program.py
+        run: |
+          python3 build_program.py
+          python3 build_author_index.py
 
       - name: Build PDF
         run: npx --yes @vivliostyle/cli@11.1.0 build
@@ -52,6 +55,8 @@ jobs:
       - name: Upload PDF
         uses: actions/upload-artifact@v7
         with:
-          name: pasj-program
-          path: dist/program.pdf
+          name: pasj-pdfs
+          path: |
+            dist/program.pdf
+            dist/author_index.pdf
           if-no-files-found: error
