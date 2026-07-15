@@ -1,0 +1,25 @@
+# Generated program and Vivliostyle build files
+/dist/
+/.vivliostyle/
+
+# Local Codex metadata
+/.agents/
+/.codex/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Node.js dependencies and logs
+/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
