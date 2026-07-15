@@ -1,63 +1,105 @@
-# new_program
+# PASJ Program Builder
 
-`abstract.json` からプログラム集の印刷用 HTML を生成し、Vivliostyle で PDF に組版するための試作です。
+`abstract.json` から次の印刷用PDFを生成するツールです。
 
-## 生成
+- PASJ2025プログラム集
+- Author Index（著者索引）
+
+PythonでHTML/CSSを生成し、Vivliostyle CLIでPDFに組版します。
+
+## 必要な環境
+
+- Python 3
+- Node.js 20以降
+- Vivliostyle CLI
+- 日本語フォント：Noto Sans CJK JP
+- 欧文フォント：Nimbus Roman（未導入の場合は利用可能なserifフォントへフォールバック）
+
+Vivliostyle CLIをグローバルインストールする場合は、次を実行します。
+
+```bash
+npm install -g @vivliostyle/cli@11.1.0
+```
+
+## ローカルでのビルド
+
+最初に、プログラムとAuthor IndexのHTML/CSSを生成します。
 
 ```bash
 python3 build_program.py
+python3 build_author_index.py
 ```
 
-生成物:
-
-- `dist/program.html`
-- `dist/program.css`
-
-## PDF 化
-
-Vivliostyle CLI が使える環境なら、`new_program` ディレクトリで以下を実行します。
+続いてPDFを生成します。
 
 ```bash
 vivliostyle build
 ```
 
-または:
+Vivliostyle CLIをグローバルインストールしていない場合は、次のコマンドでも実行できます。
 
 ```bash
-npx @vivliostyle/cli build
+npx --yes @vivliostyle/cli@11.1.0 build
 ```
 
-出力:
+`vivliostyle.config.js` の設定により、プログラムとAuthor Indexが続けてビルドされます。
+
+## 生成物
+
+中間生成物：
+
+- `dist/program.html`
+- `dist/program.css`
+- `dist/author_index.html`
+- `dist/author_index.css`
+
+最終生成物：
 
 - `dist/program.pdf`
 - `dist/author_index.pdf`
 
+`dist/` は生成ディレクトリのため、Gitの管理対象外です。
+
+## プログラム集
+
+`build_program.py` は `abstract.json` の発表情報をセッション単位でまとめます。JSONに含まれない座長名や表示用セッション名は、`program_overrides.json` で補完できます。
+
+設定キーは次の形式です。
+
+```text
+日付|会場|セッション名
+```
+
+入力ファイル、出力ディレクトリ、補完設定ファイルはオプションで変更できます。
+
+```bash
+python3 build_program.py \
+  --input abstract.json \
+  --output-dir dist \
+  --overrides program_overrides.json
+```
+
+タイトル内の `<sub>`、`<sup>`、`<i>`、`<em>`、`<b>`、`<strong>`、`<br>` は、安全なインラインHTMLとして保持されます。
+
 ## Author Index
 
-`abstract.json` の `coauthors` から、姓のアルファベット順で Author Index を生成します。
-同じ著者が複数の発表に含まれる場合は、講演番号を1行にまとめます。
+`build_author_index.py` は `abstract.json` の `coauthors` から、姓のアルファベット順で著者索引を生成します。同一著者が複数の発表に含まれる場合は、対応する講演番号を1行にまとめます。
 
 ```bash
-python3 build_author_index.py
+python3 build_author_index.py \
+  --input abstract.json \
+  --output-dir dist
 ```
 
-中間生成物:
+## GitHub Actions
 
-- `dist/author_index.html`
-- `dist/author_index.css`
+`.github/workflows/build-pdf.yml` が、`main` ブランチへの対象ファイルのpush時に自動実行されます。GitHubのActions画面から `workflow_dispatch` による手動実行もできます。
 
-入力ファイルと出力ディレクトリは変更できます。
+Workflowでは次を実行します。
 
-```bash
-python3 build_author_index.py --input abstract.json --output-dir dist
-```
+1. Noto CJK、Nimbus Roman、Chrome用ライブラリのインストール
+2. プログラムとAuthor IndexのHTML/CSS生成
+3. Vivliostyle CLI 11.1.0によるPDF生成
+4. 2つのPDFを `pasj-pdfs` Artifactとして保存
 
-`author_index_template_2025.docx` のA5判、余白、書体、文字サイズ、2列の比率、
-各ページのヘッダーをCSSで再現しています。HTML生成後に `vivliostyle build` を実行すると
-最終成果物の `dist/author_index.pdf` が生成されます。
-
-## 補足
-
-- `program_overrides.json` は、JSON に無い座長や表示用セッション名を補うための設定です。
-- キーは `日付|会場|セッション名` です。
-- 現状は Word テンプレートの「セッション見出し + 各発表2行」の見た目を参考にしています。
+生成したPDFは、GitHubのWorkflow実行結果にあるArtifactsから取得できます。

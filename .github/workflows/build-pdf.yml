@@ -3,7 +3,7 @@ name: Build program PDF
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - abstract.json
       - program_overrides.json
