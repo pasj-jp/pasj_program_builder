@@ -1,17 +1,22 @@
 name: Build program PDF
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - abstract.json
-      - program_overrides.json
-      - build_program.py
-      - build_author_index.py
-      - vivliostyle.config.js
-      - .github/workflows/build-pdf.yml
   workflow_dispatch:
+    inputs:
+      json_file:
+        description: JSON file used to build the program
+        required: true
+        type: choice
+        options:
+          - abstract_2025.json
+          - abstract_2026.json
+      chair:
+        description: Use chair_2025.json
+        required: true
+        type: choice
+        options:
+          - use
+          - do-not-use
 
 permissions:
   contents: read
@@ -45,9 +50,16 @@ jobs:
           fc-match "Nimbus Roman"
 
       - name: Generate HTML and CSS
+        env:
+          INPUT_JSON: ${{ inputs.json_file }}
+          USE_CHAIR: ${{ inputs.chair }}
         run: |
-          python3 build_program.py
-          python3 build_author_index.py
+          if [ "$USE_CHAIR" = "use" ]; then
+            python3 build_program.py --input "$INPUT_JSON" --chair chair_2025.json
+          else
+            python3 build_program.py --input "$INPUT_JSON"
+          fi
+          python3 build_author_index.py --input "$INPUT_JSON"
 
       - name: Build PDF
         run: npx --yes @vivliostyle/cli@11.1.0 build

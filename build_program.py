@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a printable program booklet HTML from abstract.json.
+"""Build a printable program booklet HTML from an abstract JSON file.
 
 The generated HTML is intended to be typeset to PDF by Vivliostyle.
 It deliberately uses only the Python standard library so that the data
@@ -18,9 +18,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parent
-DEFAULT_INPUT = ROOT / "abstract.json"
 DEFAULT_OUTPUT_DIR = ROOT / "dist"
-DEFAULT_OVERRIDES = ROOT / "program_overrides.json"
 
 
 ALLOWED_INLINE_TAGS = {"sup", "sub", "i", "em", "b", "strong", "br"}
@@ -72,7 +70,7 @@ def strip_html(value: str) -> str:
 def safe_inline_html(value: str) -> str:
     """Escape arbitrary HTML but preserve a small set of inline tags.
 
-    abstract.json contains preformatted author strings with <sup> markers.
+    Abstract JSON files contain preformatted author strings with <sup> markers.
     We keep those while avoiding accidental layout-breaking markup.
     """
 
@@ -214,7 +212,7 @@ def load_presentations(path: Path) -> list[Presentation]:
     return sorted(presentations, key=lambda p: (p.order, p.code))
 
 
-def load_overrides(path: Path) -> dict[str, Any]:
+def load_chair_data(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -227,7 +225,7 @@ def block_key(presentation: Presentation) -> tuple[str, str, str]:
     return presentation.date, presentation.room, presentation.session
 
 
-def make_blocks(presentations: list[Presentation], overrides: dict[str, Any]) -> list[ProgramBlock]:
+def make_blocks(presentations: list[Presentation], chair_data: dict[str, Any]) -> list[ProgramBlock]:
     blocks: list[ProgramBlock] = []
     current: list[Presentation] = []
     current_key: tuple[str, str, str] | None = None
@@ -235,18 +233,18 @@ def make_blocks(presentations: list[Presentation], overrides: dict[str, Any]) ->
     for pres in presentations:
         key = block_key(pres)
         if current and key != current_key:
-            blocks.append(make_block(current, overrides))
+            blocks.append(make_block(current, chair_data))
             current = []
         current_key = key
         current.append(pres)
 
     if current:
-        blocks.append(make_block(current, overrides))
+        blocks.append(make_block(current, chair_data))
 
     return blocks
 
 
-def make_block(items: list[Presentation], overrides: dict[str, Any]) -> ProgramBlock:
+def make_block(items: list[Presentation], chair_data: dict[str, Any]) -> ProgramBlock:
     first, last = items[0], items[-1]
     start, _ = split_time_range(first.time)
     _, end = split_time_range(last.time)
@@ -260,13 +258,13 @@ def make_block(items: list[Presentation], overrides: dict[str, Any]) -> ProgramB
         presentations=items,
     )
 
-    override_key = f"{block.date}|{block.room}|{block.session}"
-    override = overrides.get(override_key, {})
-    if isinstance(override, dict):
-        block.chair = str(override.get("chair") or "")
-        block.heading = str(override.get("heading") or "")
-        if override.get("time"):
-            block.start_time, block.end_time = split_time_range(str(override["time"]))
+    chair_key = f"{block.date}|{block.room}|{block.session}"
+    chair_entry = chair_data.get(chair_key, {})
+    if isinstance(chair_entry, dict):
+        block.chair = str(chair_entry.get("chair") or "")
+        block.heading = str(chair_entry.get("heading") or "")
+        if chair_entry.get("time"):
+            block.start_time, block.end_time = split_time_range(str(chair_entry["time"]))
 
     return block
 
@@ -453,14 +451,14 @@ def write_outputs(html_text: str, output_dir: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
+    parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
-    parser.add_argument("--overrides", type=Path, default=DEFAULT_OVERRIDES)
+    parser.add_argument("--chair", type=Path)
     args = parser.parse_args()
 
     presentations = load_presentations(args.input)
-    overrides = load_overrides(args.overrides)
-    blocks = make_blocks(presentations, overrides)
+    chair_data = load_chair_data(args.chair) if args.chair else {}
+    blocks = make_blocks(presentations, chair_data)
     write_outputs(render_html(blocks), args.output_dir)
 
     print(f"presentations: {len(presentations)}")

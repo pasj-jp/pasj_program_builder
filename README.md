@@ -1,6 +1,6 @@
 # PASJ Program Builder
 
-`abstract.json` から次の印刷用PDFを生成するツールです。
+選択した抄録JSONファイルから次の印刷用PDFを生成するツールです。
 
 - PASJ2025プログラム集
 - Author Index（著者索引）
@@ -23,11 +23,18 @@ npm install -g @vivliostyle/cli@11.1.0
 
 ## ローカルでのビルド
 
-最初に、プログラムとAuthor IndexのHTML/CSSを生成します。
+最初に、利用するJSONファイルを明示してプログラムとAuthor IndexのHTML/CSSを生成します。
 
 ```bash
-python3 build_program.py
-python3 build_author_index.py
+python3 build_program.py --input abstract_2025.json
+python3 build_author_index.py --input abstract_2025.json
+```
+
+2026年のJSONファイルを使う場合も、両方のコマンドに同じ `--input` を指定します。
+
+```bash
+python3 build_program.py --input abstract_2026.json
+python3 build_author_index.py --input abstract_2026.json
 ```
 
 続いてPDFを生成します。
@@ -62,7 +69,9 @@ npx --yes @vivliostyle/cli@11.1.0 build
 
 ## プログラム集
 
-`build_program.py` は `abstract.json` の発表情報をセッション単位でまとめます。JSONに含まれない座長名や表示用セッション名は、`program_overrides.json` で補完できます。
+`build_program.py` は指定した抄録JSONの発表情報をセッション単位でまとめます。JSONに含まれない座長名は、`chair_2025.json` から追加できます。このファイルには座長名に加え、必要なセッションの表示名も含まれます。
+
+座長情報を利用する場合だけ、`--chair chair_2025.json` を指定します。省略した場合は座長情報を利用しません。
 
 設定キーは次の形式です。
 
@@ -70,30 +79,35 @@ npx --yes @vivliostyle/cli@11.1.0 build
 日付|会場|セッション名
 ```
 
-入力ファイル、出力ディレクトリ、補完設定ファイルはオプションで変更できます。
+入力ファイル、出力ディレクトリ、座長情報ファイルはオプションで変更できます。
 
 ```bash
 python3 build_program.py \
-  --input abstract.json \
+  --input abstract_2025.json \
   --output-dir dist \
-  --overrides program_overrides.json
+  --chair chair_2025.json
 ```
 
 タイトル内の `<sub>`、`<sup>`、`<i>`、`<em>`、`<b>`、`<strong>`、`<br>` は、安全なインラインHTMLとして保持されます。
 
 ## Author Index
 
-`build_author_index.py` は `abstract.json` の `coauthors` から、姓のアルファベット順で著者索引を生成します。同一著者が複数の発表に含まれる場合は、対応する講演番号を1行にまとめます。
+`build_author_index.py` は指定した抄録JSONの `coauthors` から、姓のアルファベット順で著者索引を生成します。同一著者が複数の発表に含まれる場合は、対応する講演番号を1行にまとめます。
 
 ```bash
 python3 build_author_index.py \
-  --input abstract.json \
+  --input abstract_2025.json \
   --output-dir dist
 ```
 
 ## GitHub Actions
 
-`.github/workflows/build-pdf.yml` が、`main` ブランチへの対象ファイルのpush時に自動実行されます。GitHubのActions画面から `workflow_dispatch` による手動実行もできます。
+GitHubのActions画面から `.github/workflows/build-pdf.yml` を手動実行し、次の2項目を選択します。
+
+- `json_file`: `abstract_2025.json` または `abstract_2026.json`
+- `chair`: `use`（`chair_2025.json`を利用）または `do-not-use`（利用しない）
+
+暗黙のデフォルトはなく、pushによる自動実行も行いません。
 
 Workflowでは次を実行します。
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build an alphabetical author index from abstract.json."""
+"""Build an alphabetical author index from an abstract JSON file."""
 
 from __future__ import annotations
 
@@ -15,7 +15,6 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parent
-DEFAULT_INPUT = ROOT / "abstract.json"
 DEFAULT_OUTPUT_DIR = ROOT / "dist"
 
 
@@ -161,7 +160,7 @@ def write_outputs(entries: list[AuthorEntry], output_dir: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
+    parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     args = parser.parse_args()
 
