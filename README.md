@@ -6,6 +6,7 @@
 - Author Index（著者索引）
 
 PythonでHTML/CSSを生成し、Vivliostyle CLIでPDFに組版します。
+元データがExcelまたはCSVの場合は、`pasj_program_to_json.py`でビルド用のJSONへ変換できます。
 
 ## 必要な環境
 
@@ -14,12 +15,44 @@ PythonでHTML/CSSを生成し、Vivliostyle CLIでPDFに組版します。
 - Vivliostyle CLI
 - 日本語フォント：Noto Sans CJK JP
 - 欧文フォント：Nimbus Roman（未導入の場合は利用可能なserifフォントへフォールバック）
+- openpyxl（ExcelファイルをJSONへ変換する場合のみ）
 
 Vivliostyle CLIをグローバルインストールする場合は、次を実行します。
 
 ```bash
 npm install -g @vivliostyle/cli@11.1.0
 ```
+
+Excelファイルを変換する場合は、`openpyxl`もインストールします。
+
+```bash
+python3 -m pip install openpyxl
+```
+
+## 抄録JSONの作成
+
+`pasj_program_to_json.py`は、加速器学会のプログラムをビルドで利用する構造化JSONへ変換します。入力形式はExcel（`.xlsx`）とCSVに対応しているため、Excelを事前にCSVへ変換したり、不要な列を手作業で削除したりする必要はありません。
+
+Excelファイルを変換する場合は、入力ファイルと出力ファイルを指定します。
+
+```bash
+python3 pasj_program_to_json.py program.xlsx abstract_2026.json
+```
+
+通常は先頭のシートを読み込みます。別のシートを使用する場合は、`--sheet`でシート名を指定します。
+
+```bash
+python3 pasj_program_to_json.py program.xlsx abstract_2026.json \
+  --sheet "IAP-v18"
+```
+
+CSVファイルも同じ形式で変換できます。
+
+```bash
+python3 pasj_program_to_json.py program.csv abstract_2026.json
+```
+
+出力には、スクリプト内で定義されたプログラム情報と連名者情報だけが含まれます。Excelの開催日は、`8月26日`のような表記へ変換されます。
 
 ## ローカルでのビルド
 
