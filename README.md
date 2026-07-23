@@ -12,22 +12,136 @@ PythonでHTML/CSSを生成し、Vivliostyle CLIでPDFに組版します。
 
 - Python 3
 - Node.js 20以降
-- Vivliostyle CLI
+- Vivliostyle CLI 11.1.0
 - 日本語フォント：Noto Sans CJK JP
 - 欧文フォント：Nimbus Roman（未導入の場合は利用可能なserifフォントへフォールバック）
 - openpyxl（ExcelファイルをJSONへ変換する場合のみ）
+
+### Ubuntu／Debianでの準備
+
+Python、フォント、VivliostyleがPDF生成に使用するブラウザ関連ライブラリをインストールします。
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+  python3 \
+  python3-pip \
+  python3-venv \
+  fonts-noto-cjk \
+  fonts-urw-base35 \
+  libgbm1
+sudo fc-cache -f
+```
+
+Node.jsは、後述のバージョン管理ツールを使う方法を推奨します。ディストリビューション標準の`nodejs`パッケージはバージョンが古い場合があります。
+
+### macOSでの準備
+
+先に[Homebrew公式サイト](https://brew.sh/ja/)の手順でHomebrewをインストールしてから、Python、Node.js、Noto Sans CJKをインストールします。
+
+```bash
+brew update
+brew install python node
+brew install --cask font-noto-sans-cjk
+```
+
+macOSには`libgbm1`の追加インストールは必要ありません。Nimbus Romanがなくても、Times New Romanなど利用可能な欧文フォントへフォールバックします。
+
+Homebrewを使わずNode.jsを管理したい場合は、次のnvmを利用できます。
+
+### Node.js環境
+
+このプロジェクトではNode.js 20以降と、Node.jsに同梱されるnpmを使用します。まず現在の環境を確認します。
+
+```bash
+node --version
+npm --version
+```
+
+`node --version`が`v20`以上であれば、そのまま利用できます。
+
+#### Homebrewを使う場合（macOS）
+
+HomebrewでNode.jsをインストールまたは更新します。
+
+```bash
+brew install node
+```
+
+すでにHomebrew版のNode.jsを導入している場合は、次のコマンドで更新できます。
+
+```bash
+brew update
+brew upgrade node
+```
+
+#### nvmを使う場合（macOS／Linux）
+
+複数のNode.jsバージョンを切り替える場合は、Node Version Manager（nvm）が便利です。[nvmの公式手順](https://github.com/nvm-sh/nvm#installing-and-updating)に従ってインストールした後、最新のLTS版を導入します。
+
+```bash
+nvm install --lts
+nvm use --lts
+nvm alias default 'lts/*'
+```
+
+新しいターミナルを開いた後も、次のコマンドで選択中のバージョンを確認できます。
+
+```bash
+node --version
+npm --version
+```
+
+最後にPythonも確認します。
+
+```bash
+python3 --version
+```
+
+### Pythonパッケージ
+
+ExcelファイルをJSONへ変換する場合は`openpyxl`が必要です。プロジェクト用の仮想環境を作成してインストールする方法を推奨します。
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install --upgrade pip
+python3 -m pip install openpyxl
+```
+
+CSVから変換する場合や、作成済みJSONからHTMLを生成するだけの場合、追加のPythonパッケージは必要ありません。
+
+### Vivliostyle CLI
 
 Vivliostyle CLIをグローバルインストールする場合は、次を実行します。
 
 ```bash
 npm install -g @vivliostyle/cli@11.1.0
+vivliostyle --version
 ```
 
-Excelファイルを変換する場合は、`openpyxl`もインストールします。
+グローバルインストールを行わない場合は、ビルド時に`npx`で実行できます。
 
 ```bash
-python3 -m pip install openpyxl
+npx --yes @vivliostyle/cli@11.1.0 build
 ```
+
+### フォントの確認
+
+Ubuntu／Debianでは、次のコマンドで使用されるフォントを確認できます。
+
+```bash
+fc-match "Noto Sans CJK JP"
+fc-match "Nimbus Roman"
+```
+
+macOSでは、次のコマンドでNoto Sans CJKが認識されているか確認できます。
+
+```bash
+system_profiler SPFontsDataType | grep -i "Noto Sans CJK"
+```
+
+別のOSでは、Noto Sans CJK JPをインストールするか、日本語表示が可能なフォントを用意してください。Nimbus Romanがない場合、CSSで指定された利用可能なserifフォントへフォールバックします。
 
 ## 抄録JSONの作成
 
