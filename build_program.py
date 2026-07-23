@@ -12,6 +12,7 @@ import argparse
 import html
 import json
 import re
+from datetime import date
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -98,13 +99,29 @@ def safe_inline_html(value: str) -> str:
     return escaped
 
 
-def japanese_weekday(date_text: str) -> str:
-    table = {
-        "8月6日": "水",
-        "8月7日": "木",
-        "8月8日": "金",
-    }
-    return table.get(date_text, "")
+def format_date_with_weekdays(date_text: str, year: int | None) -> str:
+    if year is None:
+        return date_text
+
+    match = re.fullmatch(r"(\d+)月(\d+)日(?:・(\d+)日)?", date_text)
+    if not match:
+        return date_text
+
+    month = int(match.group(1))
+    days = [int(match.group(2))]
+    if match.group(3):
+        days.append(int(match.group(3)))
+
+    weekdays = "月火水木金土日"
+    try:
+        formatted_days = [
+            f"{day}日（{weekdays[date(year, month, day).weekday()]}）"
+            for day in days
+        ]
+    except ValueError:
+        return date_text
+
+    return f"{month}月" + "・".join(formatted_days)
 
 
 def split_time_range(value: str) -> tuple[str, str]:
@@ -269,11 +286,14 @@ def make_block(items: list[Presentation], chair_data: dict[str, Any]) -> Program
     return block
 
 
-def block_title(block: ProgramBlock) -> str:
-    weekday = japanese_weekday(block.date)
-    date = f"{block.date}（{weekday}）" if weekday and "（" not in block.date else block.date
+def block_title(block: ProgramBlock, year: int | None) -> str:
+    formatted_date = format_date_with_weekdays(block.date, year)
     time = f"{block.start_time}-{block.end_time}" if block.start_time and block.end_time else ""
-    base = "　".join(part for part in [date, time, block.room, block.heading or block.session] if part)
+    base = "　".join(
+        part
+        for part in [formatted_date, time, block.room, block.heading or block.session]
+        if part
+    )
     if block.chair:
         base += f"　座長：{block.chair}"
     return base
@@ -308,11 +328,11 @@ def render_presentation(pres: Presentation) -> str:
 """
 
 
-def render_block(block: ProgramBlock) -> str:
+def render_block(block: ProgramBlock, year: int | None) -> str:
     rows = "\n".join(render_presentation(p) for p in block.presentations)
     return f"""\
     <section class="session-block">
-      <div class="session-heading">{html.escape(block_title(block))}</div>
+      <div class="session-heading">{html.escape(block_title(block, year))}</div>
       <table class="program-table">
         <tbody>
 {rows}
@@ -322,8 +342,8 @@ def render_block(block: ProgramBlock) -> str:
 """
 
 
-def render_html(blocks: list[ProgramBlock]) -> str:
-    body = "\n".join(render_block(block) for block in blocks)
+def render_html(blocks: list[ProgramBlock], year: int | None) -> str:
+    body = "\n".join(render_block(block, year) for block in blocks)
     return f"""<!doctype html>
 <html lang="ja">
 <head>
@@ -452,6 +472,7 @@ def write_outputs(html_text: str, output_dir: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=Path, required=True)
+    parser.add_argument("--year", type=int)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--chair", type=Path)
     args = parser.parse_args()
@@ -459,7 +480,7 @@ def main() -> None:
     presentations = load_presentations(args.input)
     chair_data = load_chair_data(args.chair) if args.chair else {}
     blocks = make_blocks(presentations, chair_data)
-    write_outputs(render_html(blocks), args.output_dir)
+    write_outputs(render_html(blocks, args.year), args.output_dir)
 
     print(f"presentations: {len(presentations)}")
     print(f"blocks: {len(blocks)}")

@@ -59,14 +59,14 @@ python3 pasj_program_to_json.py program.csv abstract_2026.json
 最初に、利用するJSONファイルを明示してプログラムとAuthor IndexのHTML/CSSを生成します。
 
 ```bash
-python3 build_program.py --input abstract_2025.json
+python3 build_program.py --input abstract_2025.json --year 2025
 python3 build_author_index.py --input abstract_2025.json
 ```
 
 2026年のJSONファイルを使う場合も、両方のコマンドに同じ `--input` を指定します。
 
 ```bash
-python3 build_program.py --input abstract_2026.json
+python3 build_program.py --input abstract_2026.json --year 2026
 python3 build_author_index.py --input abstract_2026.json
 ```
 
@@ -117,11 +117,14 @@ npx --yes @vivliostyle/cli@11.1.0 build
 ```bash
 python3 build_program.py \
   --input abstract_2025.json \
+  --year 2025 \
   --output-dir dist \
   --chair chair_2025.json
 ```
 
 タイトル内の `<sub>`、`<sup>`、`<i>`、`<em>`、`<b>`、`<strong>`、`<br>` は、安全なインラインHTMLとして保持されます。
+
+`--year`を指定すると、JSON内の開催日から曜日を計算して見出しに表示します。省略した場合は曜日を表示しません。
 
 ## Author Index
 
@@ -137,10 +140,11 @@ python3 build_author_index.py \
 
 GitHubのActions画面から `.github/workflows/build-pdf.yml` を手動実行し、次の2項目を選択します。
 
-- `json_file`: `abstract_2025.json` または `abstract_2026.json`
+- `json_file`: 利用するJSONファイルのパス
 - `chair`: `use`（`chair_2025.json`を利用）または `do-not-use`（利用しない）
 
 暗黙のデフォルトはなく、pushによる自動実行も行いません。
+Workflowでは`--year`を指定しないため、ファイル名にかかわらず実行でき、開催日の曜日は表示されません。
 
 Workflowでは次を実行します。
 

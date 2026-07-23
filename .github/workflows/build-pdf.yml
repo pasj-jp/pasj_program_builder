@@ -6,10 +6,7 @@ on:
       json_file:
         description: JSON file used to build the program
         required: true
-        type: choice
-        options:
-          - abstract_2025.json
-          - abstract_2026.json
+        type: string
       chair:
         description: Use chair_2025.json
         required: true
