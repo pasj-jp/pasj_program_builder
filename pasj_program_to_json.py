@@ -38,7 +38,9 @@ key_map = {
     "賞状の敬称": "honorific",
     "通信欄": "note",
     "著者情報": "author_text_html",
+    "著者情報（英語）": "author_text_en_html",
     "著者所属情報": "affiliation_text_html",
+    "著者所属情報（英語）": "affiliation_text_en_html",
     "登録日時": "created_at",
     "更新日時": "updated_at",
 }

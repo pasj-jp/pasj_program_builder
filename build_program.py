@@ -193,7 +193,11 @@ def presenter_from_authors_en(authors_en_html: str) -> tuple[str, str]:
 
 
 def to_presentation(record: dict[str, Any], index: int) -> Presentation:
-    authors_en = record.get("著者情報（英語）") or ""
+    authors_en = (
+        record.get("author_text_en_html")
+        or record.get("著者情報（英語）")
+        or ""
+    )
     presenter_from_authors, affiliation_from_authors = presenter_from_authors_en(authors_en)
     presenter_en = presenter_from_authors or full_name_en(record)
     affiliation_en = affiliation_from_authors
@@ -203,6 +207,15 @@ def to_presentation(record: dict[str, Any], index: int) -> Presentation:
     if not affiliation_en and authors_en:
         m = re.search(r"（(.+?)）\s*$", strip_html(authors_en))
         affiliation_en = m.group(1) if m else ""
+    if not affiliation_en:
+        # Keep the affiliation beside the English presenter name English-only.
+        # Legacy JSON retains the original Japanese header; newly converted
+        # JSON uses the normalized key.
+        affiliation_en = str(
+            record.get("affiliation_text_en_html")
+            or record.get("著者所属情報（英語）")
+            or ""
+        )
 
     return Presentation(
         order=parse_order(record.get("掲載順序"), index),
