@@ -30,10 +30,12 @@ class Presentation:
     order: int
     code: str
     session: str
+    category: str
     date: str
     time: str
     room: str
     presentation_type: str
+    category_1: str
     title_ja: str
     title_en: str
     presenter_ja: str
@@ -221,10 +223,12 @@ def to_presentation(record: dict[str, Any], index: int) -> Presentation:
         order=parse_order(record.get("掲載順序"), index),
         code=str(record.get("talk_id") or record.get("講演番号") or ""),
         session=str(record.get("session") or ""),
+        category=str(record.get("category") or ""),
         date=str(record.get("date") or ""),
         time=str(record.get("time") or ""),
         room=str(record.get("room") or ""),
         presentation_type=str(record.get("確定発表形式2") or record.get("presentation_type") or ""),
+        category_1=str(record.get("category_1") or "").strip(),
         title_ja=str(record.get("title_ja") or ""),
         title_en=str(record.get("title_en") or ""),
         presenter_ja=full_name_ja(record),
@@ -302,14 +306,13 @@ def make_block(items: list[Presentation], chair_data: dict[str, Any]) -> Program
 def block_title(block: ProgramBlock, year: int | None) -> str:
     formatted_date = format_date_with_weekdays(block.date, year)
     time = f"{block.start_time}-{block.end_time}" if block.start_time and block.end_time else ""
-    base = "　".join(
-        part
-        for part in [formatted_date, time, block.room, block.heading or block.session]
-        if part
+    meta_line = "　".join(
+        part for part in [formatted_date, time, block.room] if part
     )
+    session_line = block.heading or block.session
     if block.chair:
-        base += f"　座長：{block.chair}"
-    return base
+        session_line += f"　座長：{block.chair}"
+    return "\n".join(part for part in [meta_line, session_line] if part)
 
 
 def render_presentation(pres: Presentation) -> str:
@@ -341,11 +344,34 @@ def render_presentation(pres: Presentation) -> str:
 """
 
 
+def is_poster_presentation(pres: Presentation) -> bool:
+    return len(pres.code) >= 3 and pres.code[2].upper() == "P"
+
+
+def render_sub_session_heading(category: str) -> str:
+    return f"""\
+        <tr class="sub-session-heading">
+          <th colspan="2">{html.escape(category)}</th>
+        </tr>
+"""
+
+
 def render_block(block: ProgramBlock, year: int | None) -> str:
-    rows = "\n".join(render_presentation(p) for p in block.presentations)
+    rendered_rows: list[str] = []
+    current_category = ""
+    for pres in block.presentations:
+        if is_poster_presentation(pres):
+            if pres.category and pres.category != current_category:
+                rendered_rows.append(render_sub_session_heading(pres.category))
+            current_category = pres.category
+        else:
+            current_category = ""
+        rendered_rows.append(render_presentation(pres))
+    rows = "\n".join(rendered_rows)
+    heading = html.escape(block_title(block, year)).replace("\n", "<br>\n")
     return f"""\
     <section class="session-block">
-      <div class="session-heading">{html.escape(block_title(block, year))}</div>
+      <div class="session-heading">{heading}</div>
       <table class="program-table">
         <tbody>
 {rows}
@@ -400,19 +426,22 @@ body {
 }
 
 .session-block {
-  break-inside: avoid;
+  break-before: page;
+  page-break-before: always;
   margin: 0 0 2.2mm;
 }
 
 .program-table {
   border-collapse: collapse;
   table-layout: fixed;
-  break-inside: avoid;
 }
 
 .session-heading {
   box-sizing: border-box;
   width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  break-inside: avoid;
   break-after: avoid-page;
   page-break-after: avoid;
   background: #666;
@@ -433,6 +462,22 @@ body {
   font-weight: 700;
   padding: 1.0mm 0.6mm 0.2mm 0.5mm;
   white-space: nowrap;
+}
+
+.sub-session-heading {
+  break-inside: avoid;
+  break-after: avoid-page;
+  page-break-after: avoid;
+}
+
+.sub-session-heading th {
+  box-sizing: border-box;
+  padding: 0.8mm 1mm;
+  background: #ddd;
+  color: #111;
+  text-align: left;
+  font-size: 11pt;
+  line-height: 1.25;
 }
 
 .paper-title {

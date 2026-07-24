@@ -15,6 +15,7 @@ key_map = {
     "参加登録番号": "registration_id",
     "講演番号": "talk_id",
     "セッション": "session",
+    "セッション名": "category",
     "確定発表形式": "confirmed_format",
     "開催日": "date",
     "発表時間": "time",
