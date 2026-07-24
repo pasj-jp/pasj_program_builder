@@ -344,10 +344,6 @@ def render_presentation(pres: Presentation) -> str:
 """
 
 
-def is_poster_presentation(pres: Presentation) -> bool:
-    return len(pres.code) >= 3 and pres.code[2].upper() == "P"
-
-
 def render_sub_session_heading(category: str) -> str:
     return f"""\
         <tr class="sub-session-heading">
@@ -360,12 +356,9 @@ def render_block(block: ProgramBlock, year: int | None) -> str:
     rendered_rows: list[str] = []
     current_category = ""
     for pres in block.presentations:
-        if is_poster_presentation(pres):
-            if pres.category and pres.category != current_category:
-                rendered_rows.append(render_sub_session_heading(pres.category))
-            current_category = pres.category
-        else:
-            current_category = ""
+        if pres.category and pres.category != current_category:
+            rendered_rows.append(render_sub_session_heading(pres.category))
+        current_category = pres.category
         rendered_rows.append(render_presentation(pres))
     rows = "\n".join(rendered_rows)
     heading = html.escape(block_title(block, year)).replace("\n", "<br>\n")
