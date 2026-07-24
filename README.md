@@ -1,12 +1,12 @@
 # PASJ Program Builder
 
-選択した抄録JSONファイルから次の印刷用PDFを生成するツールです。
+選択した加速器学会年会抄録JSONファイルから次の印刷用PDFを生成するツールです。
 
-- PASJ2025プログラム集
+- 加速器学会年会プログラム集
 - Author Index（著者索引）
 
 PythonでHTML/CSSを生成し、Vivliostyle CLIでPDFに組版します。
-元データがExcelまたはCSVの場合は、`pasj_program_to_json.py`でビルド用のJSONへ変換できます。
+元抄録データがExcelまたはCSVの場合は、`pasj_program_to_json.py`でビルド用のJSONへ変換できます。
 
 ## 必要な環境
 
