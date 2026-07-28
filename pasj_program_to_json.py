@@ -60,6 +60,7 @@ coauthor_fields = {
 }
 
 COAUTHOR_PATTERN = re.compile(r"連名者\[(\d+)\](.+)")
+EXCEL_CR_ESCAPE_PATTERN = re.compile(r"_x000D_", re.IGNORECASE)
 
 
 def cell_to_string(value):
@@ -68,7 +69,9 @@ def cell_to_string(value):
         return ""
     if isinstance(value, bool):
         return "TRUE" if value else "FALSE"
-    return str(value)
+    # Excel がセル内改行の CR を OOXML のエスケープ表現として保持して
+    # いる場合がある。直後の LF は残し、不要な文字列だけを取り除く。
+    return EXCEL_CR_ESCAPE_PATTERN.sub("", str(value))
 
 
 def format_xlsx_value(header, value, workbook_epoch):
