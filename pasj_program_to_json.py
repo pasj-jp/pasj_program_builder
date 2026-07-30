@@ -20,6 +20,7 @@ key_map = {
     "開催日": "date",
     "発表時間": "time",
     "会場": "room",
+    "座長": "chair",
     "姓": "last_name",
     "名": "first_name",
     "姓(かな)": "last_name_kana",
@@ -109,7 +110,10 @@ def convert_row(row):
                 coauthors[index - 1][field_en] = value
         elif key in key_map:
             # 未定義の列を無視することで、従来の「余計な列を削除」を行う。
-            converted[key_map[key]] = value
+            field = key_map[key]
+            if field == "chair" and not value.strip():
+                continue
+            converted[field] = value
 
     coauthors = [
         coauthor

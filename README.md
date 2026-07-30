@@ -148,14 +148,14 @@ system_profiler SPFontsDataType | grep -i "Noto Sans CJK"
 Excelファイルを変換する場合は、入力ファイルと出力ファイルを指定します。
 
 ```bash
-python3 pasj_program_to_json.py program.xlsx abstract_2026.json
+python3 pasj_program_to_json.py program_2026_v2.xlsx abstract_2026.json
 ```
 
 通常は先頭のシートを読み込みます。別のシートを使用する場合は、`--sheet`でシート名を指定します。
 
 ```bash
-python3 pasj_program_to_json.py program.xlsx abstract_2026.json \
-  --sheet "IAP-v18"
+python3 pasj_program_to_json.py program_2026_v2.xlsx abstract_2026.json \
+  --sheet "IAP-v20"
 ```
 
 CSVファイルも同じ形式で変換できます。
@@ -164,7 +164,7 @@ CSVファイルも同じ形式で変換できます。
 python3 pasj_program_to_json.py program.csv abstract_2026.json
 ```
 
-出力には、スクリプトで定義されたプログラム情報と連名者情報だけが含まれます。Excelの開催日は、`8月26日`のような表記に変換されます。
+出力には、スクリプトで定義されたプログラム情報、座長情報、連名者情報だけが含まれます。Excelの開催日は、`8月26日`のような表記に変換されます。
 
 ## ローカルでのビルド
 
@@ -216,15 +216,25 @@ PASJ_YEAR=2026 npx --yes @vivliostyle/cli@11.1.0 build
 
 ## プログラム集
 
-`build_program.py`は、指定した抄録JSONの発表情報をセッション単位でまとめます。JSONに含まれない座長名は、`chair_2025.json`から追加できます。このファイルには、座長名に加えて必要なセッションの表示名も含まれます。
+`build_program.py`は、指定した抄録JSONの発表情報をセッション単位でまとめます。各発表の`chair`に座長名が含まれている場合は、同一セッション内の座長名を重複なくまとめて表示します。
 
-座長情報を利用する場合に限り、`--chair chair_2025.json`を指定します。省略した場合は座長情報を利用しません。
+抄録JSONに座長情報がない場合や、セッションの表示名を変更する場合は、外部の座長設定JSONを利用できます。利用する場合に限り、`--chair chair_2025.json`を指定します。外部JSONに`chair`が設定されている場合は、抄録JSONの座長情報より優先されます。
 
-設定キーは次の形式です。
+座長設定のキーにはセッション名を使用します。
 
-```text
-日付|会場|セッション名
+```json
+{
+  "加速構造": {
+    "chair": "吉井（KEK）"
+  },
+  "加速構造・ビーム診断": {
+    "heading": "加速構造 ／ ビーム診断・ビーム制御",
+    "chair": "福田（KEK）／小林（KEK）"
+  }
+}
 ```
+
+`chair`には座長の表示名を指定します。プログラム上のセッション名とは異なる見出しを表示する場合は、`heading`も指定できます。
 
 入力ファイル、出力ディレクトリ、座長情報ファイルはオプションで変更できます。
 

@@ -34,6 +34,7 @@ class Presentation:
     date: str
     time: str
     room: str
+    chair: str
     presentation_type: str
     category_1: str
     title_ja: str
@@ -227,6 +228,7 @@ def to_presentation(record: dict[str, Any], index: int) -> Presentation:
         date=str(record.get("date") or ""),
         time=str(record.get("time") or ""),
         room=str(record.get("room") or ""),
+        chair=str(record.get("chair") or "").strip(),
         presentation_type=str(record.get("確定発表形式2") or record.get("presentation_type") or ""),
         category_1=str(record.get("category_1") or "").strip(),
         title_ja=str(record.get("title_ja") or ""),
@@ -290,12 +292,13 @@ def make_block(items: list[Presentation], chair_data: dict[str, Any]) -> Program
         start_time=start,
         end_time=end,
         presentations=items,
+        chair="／".join(dict.fromkeys(item.chair for item in items if item.chair)),
     )
 
-    chair_key = f"{block.date}|{block.room}|{block.session}"
-    chair_entry = chair_data.get(chair_key, {})
+    chair_entry = chair_data.get(block.session, {})
     if isinstance(chair_entry, dict):
-        block.chair = str(chair_entry.get("chair") or "")
+        if chair_entry.get("chair"):
+            block.chair = str(chair_entry["chair"])
         block.heading = str(chair_entry.get("heading") or "")
         if chair_entry.get("time"):
             block.start_time, block.end_time = split_time_range(str(chair_entry["time"]))
@@ -376,11 +379,12 @@ def render_block(block: ProgramBlock, year: int | None) -> str:
 
 def render_html(blocks: list[ProgramBlock], year: int | None) -> str:
     body = "\n".join(render_block(block, year) for block in blocks)
+    document_year = year or date.today().year
     return f"""<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <title>PASJ2025 Program</title>
+  <title>PASJ{document_year} Program</title>
   <link rel="stylesheet" href="program.css">
 </head>
 <body>
