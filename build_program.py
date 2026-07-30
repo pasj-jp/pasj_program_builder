@@ -397,6 +397,8 @@ def render_html(blocks: list[ProgramBlock], year: int | None) -> str:
 
 
 CSS = """\
+@import url("../node_modules/@fontsource/noto-sans-jp/japanese.css");
+
 @page {
   size: A4;
   margin: 8mm 9mm 12mm;

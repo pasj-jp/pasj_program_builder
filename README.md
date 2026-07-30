@@ -11,7 +11,7 @@ PythonでHTML/CSSを生成し、Vivliostyle CLIでPDFに組版します。
 ## 必要な環境
 
 - Python 3
-- Node.js 20以降
+- Node.js 22.12.0以降
 - Vivliostyle CLI 11.1.0
 - 日本語フォント：Noto Sans CJK JP
 - 欧文フォント：Nimbus Roman（未導入の場合は、利用可能なセリフフォントへフォールバック）
@@ -49,14 +49,14 @@ macOSでは`libgbm1`を追加でインストールする必要はありません
 
 ### Node.js環境
 
-このプロジェクトでは、Node.js 20以降とNode.jsに同梱されるnpmを使用します。まず、現在の環境を確認します。
+このプロジェクトでは、Node.js 22.12.0以降とNode.jsに同梱されるnpmを使用します。まず、現在の環境を確認します。
 
 ```bash
 node --version
 npm --version
 ```
 
-`node --version`が`v20`以上であれば、そのまま利用できます。
+`node --version`が`v22.12.0`以上であれば、そのまま利用できます。
 
 #### Homebrewを使う場合（macOS）
 
@@ -96,6 +96,22 @@ Pythonのバージョンも確認します。
 python3 --version
 ```
 
+### プロジェクト内だけで準備する場合
+
+OS全体にNode.jsを入れない場合は、Node.jsのLinux x64配布版を`.tools/node`として展開し、PATHへ追加してからnpmを実行します。
+
+```bash
+export PATH="$PWD/.tools/node/bin:$PATH"
+npm install
+```
+
+Pythonの仮想環境は次のように作成します。
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+```
+
 ### Pythonパッケージ
 
 ExcelファイルをJSONへ変換する場合は`openpyxl`が必要です。プロジェクト用の仮想環境を作成してインストールする方法を推奨します。
@@ -104,7 +120,7 @@ ExcelファイルをJSONへ変換する場合は`openpyxl`が必要です。プ�
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install --upgrade pip
-python3 -m pip install openpyxl
+python3 -m pip install -r requirements.txt
 ```
 
 CSVから変換する場合や、作成済みのJSONからHTMLを生成するだけの場合は、追加のPythonパッケージは必要ありません。
