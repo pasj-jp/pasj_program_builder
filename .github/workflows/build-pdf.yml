@@ -11,13 +11,6 @@ on:
         description: Four-digit year used in the program and PDF titles
         required: true
         type: string
-      chair:
-        description: Use chair_2025.json
-        required: true
-        type: choice
-        options:
-          - use
-          - do-not-use
 
 permissions:
   contents: read
@@ -33,7 +26,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version-file: .node-version
           package-manager-cache: false
 
       - name: Install fonts and browser libraries
@@ -50,23 +43,21 @@ jobs:
           fc-match "Noto Sans CJK JP"
           fc-match "Nimbus Roman"
 
+      - name: Install Node.js dependencies
+        run: npm ci
+
       - name: Generate HTML and CSS
         env:
           INPUT_JSON: ${{ inputs.json_file }}
           PASJ_YEAR: ${{ inputs.year }}
-          USE_CHAIR: ${{ inputs.chair }}
         run: |
-          if [ "$USE_CHAIR" = "use" ]; then
-            python3 build_program.py --input "$INPUT_JSON" --year "$PASJ_YEAR" --chair chair_2025.json
-          else
-            python3 build_program.py --input "$INPUT_JSON" --year "$PASJ_YEAR"
-          fi
+          python3 build_program.py --input "$INPUT_JSON" --year "$PASJ_YEAR"
           python3 build_author_index.py --input "$INPUT_JSON"
 
       - name: Build PDF
         env:
           PASJ_YEAR: ${{ inputs.year }}
-        run: npx --yes @vivliostyle/cli@11.1.0 build
+        run: npx vivliostyle build
 
       - name: Upload PDF
         uses: actions/upload-artifact@v7

@@ -12,14 +12,54 @@ PythonでHTML/CSSを生成し、Vivliostyle CLIでPDFに組版します。
 
 - Python 3
 - Node.js 22.12.0以降
-- Vivliostyle CLI 11.1.0
-- 日本語フォント：Noto Sans CJK JP
+- npm
+- Vivliostyle CLI 11.1.0（`npm install`でプロジェクト内に導入）
+- 日本語フォント：Noto Sans CJK JP（プログラム集では`@fontsource/noto-sans-jp`も利用）
 - 欧文フォント：Nimbus Roman（未導入の場合は、利用可能なセリフフォントへフォールバック）
 - openpyxl（ExcelファイルをJSONへ変換する場合のみ）
 
-### Ubuntu／Debianでの準備
+## インストール方法
 
-Python、フォント、VivliostyleがPDF生成に使用するブラウザ関連ライブラリをインストールします。
+OSごとに、Python、Node.js、フォント、VivliostyleがPDF生成に使用するブラウザ関連ライブラリを準備します。
+
+Node.jsは22.12.0以降が必要です。OS標準パッケージのNode.jsが古い場合は、`nvm`などのバージョン管理ツールを使用してください。
+
+### Linuxでのインストール
+
+#### RHEL系OS（AlmaLinux、Rocky Linuxなど）
+
+Python、フォント、ブラウザ関連ライブラリをインストールします。
+
+```bash
+sudo dnf install -y \
+  python3 \
+  python3-pip \
+  fontconfig \
+  google-noto-sans-cjk-fonts \
+  urw-base35-fonts \
+  mesa-libgbm
+sudo fc-cache -f
+```
+
+Node.js 22.12.0以降とnpmをインストールします。OSのリポジトリで条件を満たすNode.jsが提供されている場合は、次のようにインストールできます。
+
+```bash
+sudo dnf install -y nodejs npm
+node --version
+npm --version
+```
+
+`node --version`が`v22.12.0`未満の場合は、`nvm`でNode.jsのLTS版をインストールしてください。
+
+```bash
+nvm install --lts
+nvm use --lts
+nvm alias default 'lts/*'
+```
+
+#### Debian系OS（Ubuntuなど）
+
+Python、フォント、ブラウザ関連ライブラリをインストールします。
 
 ```bash
 sudo apt-get update
@@ -33,9 +73,22 @@ sudo apt-get install -y \
 sudo fc-cache -f
 ```
 
-Node.jsは、後述のバージョン管理ツールを使う方法を推奨します。ディストリビューション標準の`nodejs`パッケージはバージョンが古い場合があります。
+Debian系OSの標準`nodejs`パッケージは古いことがあります。まず現在のバージョンを確認します。
 
-### macOSでの準備
+```bash
+node --version
+npm --version
+```
+
+`node --version`が`v22.12.0`未満の場合は、`nvm`でNode.jsのLTS版をインストールしてください。
+
+```bash
+nvm install --lts
+nvm use --lts
+nvm alias default 'lts/*'
+```
+
+### macOSでのインストール
 
 先に[Homebrew公式サイト](https://brew.sh/ja/)の手順でHomebrewをインストールしてから、Python、Node.js、Noto Sans CJKをインストールします。
 
@@ -45,104 +98,60 @@ brew install python node
 brew install --cask font-noto-sans-cjk
 ```
 
-macOSでは`libgbm1`を追加でインストールする必要はありません。Nimbus Romanがない場合は、Times New Romanなど、利用可能な欧文フォントへフォールバックします。
-
-### Node.js環境
-
-このプロジェクトでは、Node.js 22.12.0以降とNode.jsに同梱されるnpmを使用します。まず、現在の環境を確認します。
+Homebrew版のNode.jsが古い場合は更新します。
 
 ```bash
-node --version
-npm --version
-```
-
-`node --version`が`v22.12.0`以上であれば、そのまま利用できます。
-
-#### Homebrewを使う場合（macOS）
-
-HomebrewでNode.jsをインストールまたは更新します。
-
-```bash
-brew install node
-```
-
-すでにHomebrew版のNode.jsを導入している場合は、次のコマンドで更新できます。
-
-```bash
-brew update
 brew upgrade node
 ```
 
-#### nvmを使う場合（macOS／Linux）
+macOSでは`libgbm1`を追加でインストールする必要はありません。Nimbus Romanがない場合は、Times New Romanなど、利用可能な欧文フォントへフォールバックします。
 
-複数のNode.jsバージョンを切り替える場合は、Node Version Manager（nvm）が便利です。[nvmの公式手順](https://github.com/nvm-sh/nvm#installing-and-updating)に従ってインストールした後、最新のLTS版を導入します。
+### Windowsでのインストール
+
+WindowsではWSL上で利用してください。WSLにはUbuntuなどのLinuxディストリビューションを入れ、以降は「Linuxでのインストール」の手順に従います。
+
+Windows側にインストールしたNode.jsやnpmをWSLから使うと、環境によっては正しく動かないことがあります。WSL内で`node --version`と`npm --version`を実行し、Linux側のNode.js 22.12.0以降が使われていることを確認してください。
+
+### バージョン確認
+
+インストール後、使用中のバージョンを確認します。
 
 ```bash
-nvm install --lts
-nvm use --lts
-nvm alias default 'lts/*'
-```
-
-新しいターミナルを開いた後は、次のコマンドで使用中のバージョンを確認できます。
-
-```bash
+python3 --version
 node --version
 npm --version
 ```
 
-Pythonのバージョンも確認します。
+### プロジェクト共通セットアップ
 
-```bash
-python3 --version
-```
-
-### プロジェクト内だけで準備する場合
-
-OS全体にNode.jsを入れない場合は、Node.jsのLinux x64配布版を`.tools/node`として展開し、PATHへ追加してからnpmを実行します。
-
-```bash
-export PATH="$PWD/.tools/node/bin:$PATH"
-npm install
-```
-
-Pythonの仮想環境は次のように作成します。
-
-```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-```
-
-### Pythonパッケージ
-
-ExcelファイルをJSONへ変換する場合は`openpyxl`が必要です。プロジェクト用の仮想環境を作成してインストールする方法を推奨します。
+リポジトリを取得したら、Python仮想環境とNode.js依存パッケージをインストールします。
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
+npm install
 ```
+
+`npm install`により、Vivliostyle CLIと日本語Webフォントがプロジェクト内の`node_modules/`にインストールされます。Vivliostyle CLIをグローバルインストールする必要はありません。
+
+OS全体にNode.jsを入れない場合は、Node.jsのLinux x64配布版を`.tools/node`として展開し、PATHへ追加してから`npm install`を実行することもできます。
+
+```bash
+export PATH="$PWD/.tools/node/bin:$PATH"
+npm install
+```
+
+### Pythonパッケージについて
+
+ExcelファイルをJSONへ変換する場合は`openpyxl`が必要です。プロジェクト用の仮想環境を作成してインストールする方法を推奨します。
 
 CSVから変換する場合や、作成済みのJSONからHTMLを生成するだけの場合は、追加のPythonパッケージは必要ありません。
 
-### Vivliostyle CLI
-
-Vivliostyle CLIをグローバルインストールする場合は、次を実行します。
-
-```bash
-npm install -g @vivliostyle/cli@11.1.0
-vivliostyle --version
-```
-
-グローバルインストールを行わない場合は、ビルド時に`npx`で実行できます。
-
-```bash
-npx --yes @vivliostyle/cli@11.1.0 build
-```
-
 ### フォントの確認
 
-Ubuntu／Debianでは、次のコマンドで使用されるフォントを確認できます。
+Linuxでは、次のコマンドで使用されるフォントを確認できます。
 
 ```bash
 fc-match "Noto Sans CJK JP"
@@ -184,14 +193,19 @@ python3 pasj_program_to_json.py program.csv abstract_2026.json
 
 ## ローカルでのビルド
 
-最初に、利用するJSONファイルを明示してプログラムとAuthor IndexのHTML/CSSを生成します。
+2026年のJSONファイルを使う場合は、HTML/CSS生成からPDF作成まで次のコマンドで実行できます。
 
 ```bash
-python3 build_program.py --input abstract_2025.json --year 2025
-python3 build_author_index.py --input abstract_2025.json
+npm run build:2026
 ```
 
-2026年のJSONファイルを使う場合も、両方のコマンドに同じ`--input`を指定します。
+2025年のJSONファイルを使う場合は次を実行します。
+
+```bash
+npm run build:2025
+```
+
+手動で実行する場合は、最初に利用するJSONファイルを明示してプログラムとAuthor IndexのHTML/CSSを生成します。
 
 ```bash
 python3 build_program.py --input abstract_2026.json --year 2026
@@ -201,13 +215,7 @@ python3 build_author_index.py --input abstract_2026.json
 続いてPDFを生成します。
 
 ```bash
-PASJ_YEAR=2026 vivliostyle build
-```
-
-Vivliostyle CLIをグローバルインストールしていない場合は、次のコマンドでも実行できます。
-
-```bash
-PASJ_YEAR=2026 npx --yes @vivliostyle/cli@11.1.0 build
+PASJ_YEAR=2026 npx vivliostyle build
 ```
 
 この場合、PDFタイトルはそれぞれ`PASJ2026 Program`と`PASJ2026 Author Index`になります。`PASJ_YEAR`には、`build_program.py`の`--year`と同じ年を指定してください。`PASJ_YEAR`を省略すると、コマンドを実行した時点の西暦年が使われます。
@@ -234,32 +242,13 @@ PASJ_YEAR=2026 npx --yes @vivliostyle/cli@11.1.0 build
 
 `build_program.py`は、指定した抄録JSONの発表情報をセッション単位でまとめます。各発表の`chair`に座長名が含まれている場合は、同一セッション内の座長名を重複なくまとめて表示します。
 
-抄録JSONに座長情報がない場合や、セッションの表示名を変更する場合は、外部の座長設定JSONを利用できます。利用する場合に限り、`--chair chair_2025.json`を指定します。外部JSONに`chair`が設定されている場合は、抄録JSONの座長情報より優先されます。
-
-座長設定のキーにはセッション名を使用します。
-
-```json
-{
-  "加速構造": {
-    "chair": "吉井（KEK）"
-  },
-  "加速構造・ビーム診断": {
-    "heading": "加速構造 ／ ビーム診断・ビーム制御",
-    "chair": "福田（KEK）／小林（KEK）"
-  }
-}
-```
-
-`chair`には座長の表示名を指定します。プログラム上のセッション名とは異なる見出しを表示する場合は、`heading`も指定できます。
-
-入力ファイル、出力ディレクトリ、座長情報ファイルはオプションで変更できます。
+入力ファイルと出力ディレクトリはオプションで変更できます。
 
 ```bash
 python3 build_program.py \
-  --input abstract_2025.json \
-  --year 2025 \
-  --output-dir dist \
-  --chair chair_2025.json
+  --input abstract_2026.json \
+  --year 2026 \
+  --output-dir dist
 ```
 
 タイトル内の`<sub>`、`<sup>`、`<i>`、`<em>`、`<b>`、`<strong>`、`<br>`は、安全なインラインHTMLとして保持されます。
@@ -278,11 +267,10 @@ python3 build_author_index.py \
 
 ## GitHub Actions
 
-GitHubのActions画面から`.github/workflows/build-pdf.yml`を手動で実行し、次の3項目を指定します。
+GitHubのActions画面から`.github/workflows/build-pdf.yml`を手動で実行し、次の2項目を指定します。
 
 - `json_file`: 利用するJSONファイルのパス
 - `year`: PDFタイトルと開催日の曜日計算に使用する4桁の年
-- `chair`: `use`（`chair_2025.json`を利用）または `do-not-use`（利用しない）
 
 暗黙のデフォルト値はなく、pushによる自動実行も行いません。
 ワークフローでは、`year`を`build_program.py`の`--year`とVivliostyleの`PASJ_YEAR`の両方に渡すため、開催日の曜日とPDFタイトルに同じ年が使われます。
@@ -290,8 +278,9 @@ GitHubのActions画面から`.github/workflows/build-pdf.yml`を手動で実行�
 ワークフローでは、次の処理を実行します。
 
 1. Noto CJK、Nimbus Roman、Chrome用ライブラリのインストール
-2. プログラムとAuthor IndexのHTML/CSS生成
-3. Vivliostyle CLI 11.1.0によるPDF生成
-4. 2つのPDFを`pasj-pdfs`というArtifactとして保存
+2. `npm ci`によるVivliostyle CLIとフォント依存のインストール
+3. プログラムとAuthor IndexのHTML/CSS生成
+4. Vivliostyle CLI 11.1.0によるPDF生成
+5. 2つのPDFを`pasj-pdfs`というArtifactとして保存
 
 生成したPDFは、GitHub Actionsの実行結果にあるArtifactsから取得できます。
