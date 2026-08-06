@@ -404,7 +404,7 @@ CSS = """\
   margin: 8mm 9mm 12mm;
 
   @bottom-center {
-    content: counter(page);
+    content: none; /*ページ番号を非表示*/
     font-size: 9pt;
   }
 }
